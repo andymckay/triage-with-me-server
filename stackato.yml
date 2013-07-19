@@ -1,0 +1,9 @@
+name: triage-with-me
+
+framework:
+  type: node
+
+mem: 64M
+
+services:
+    ${name}-redis: redis
