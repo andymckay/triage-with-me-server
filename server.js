@@ -42,7 +42,7 @@ app.post('/api/', function(req, res) {
 
 app.get('/api/:key/', function(req, res) {
     var key = 'triage:' + req.params.key;
-    db.smembers(key, function(err, data) {
+    db.zrange(key, 0, -1, function(err, data) {
         res.json({'size': data.length, 'entries': data});
         res.status(200);
         res.end();
@@ -51,13 +51,19 @@ app.get('/api/:key/', function(req, res) {
 
 app.post('/api/:key/', function(req, res) {
     var key = 'triage:' + req.params.key;
-    db.sadd(key, escape(req.body.url), function(err, data) {
-        if (data) {
-            db.publish(key, escape(req.body.url));
-        }
-        res.status(201);
-        res.end();
-    });
+    var prefix = new RegExp('^https://bugzilla.mozilla.org*');
+    if (!prefix.test(req.body.url)) {
+        res.status(400);
+    } else {
+        db.zadd(key, 1, escape(req.body.url), function(err, data) {
+            if (data) {
+                db.publish(key, escape(req.body.url));
+            }
+            res.status(201);
+            res.end();
+        });
+    }
+    res.end();
 });
 
 app.get('/api-events/:key/', function(req, res) {

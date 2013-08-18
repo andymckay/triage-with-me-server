@@ -83,8 +83,9 @@ var trim = (function() {
             appendItem: function(item){
                 var url = item.get('url');
                 var bug = item.get('bug');
+                $('span.label-warning').remove();
                 $(this.el).prepend(format(
-                    '<tr><td><span class="label label-{0}">{1}</a></td><td><a href="{2}">{3}</td></tr>',
+                    '<tr><td><span class="label label-warning">latest</span> &nbsp; <span class="label label-{0}">{1}</a></td><td><a href="{2}">{3}</td></tr>',
                     bug ? 'success' : 'info', bug ? 'bug' : 'other', url, bug ? bug : trim(url)
                 ));
             }
