@@ -57,17 +57,20 @@ var trim = (function() {
 
                 $('#triage-id').text(key);
                 $.getJSON('/api/' + key + '/', function(data) {
-                    for (var record in data.entries.reverse()) {
+                    for (var record in data.entries) {
                         var url = new URL({
-                            url: data.entries[record]
+                            url: data.entries[record].url,
+                            title: data.entries[record].title
                         });
                         self.collection.add(url);
                     }
                 });
                 var source = new EventSource('/api-events/' + key + '/');
                 source.addEventListener('message', function(e) {
+                    var json = JSON.parse(e.data);
                     var url = new URL({
-                        url: e.data
+                        url: json.url,
+                        title: json.title
                     });
                     self.collection.add(url);
                 }, false);
@@ -82,11 +85,12 @@ var trim = (function() {
             },
             appendItem: function(item){
                 var url = item.get('url');
+                var title = item.get('title');
                 var bug = item.get('bug');
                 $('span.label-warning').remove();
                 $(this.el).prepend(format(
                     '<tr><td><span class="label label-warning">latest</span> &nbsp; <span class="label label-{0}">{1}</a></td><td><a href="{2}">{3}</td></tr>',
-                    bug ? 'success' : 'info', bug ? 'bug' : 'other', url, bug ? bug : trim(url)
+                    bug ? 'success' : 'info', bug ? 'bug' : 'other', url, bug ? title : trim(url)
                 ));
             }
         });

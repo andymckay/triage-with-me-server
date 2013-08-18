@@ -5,7 +5,7 @@ var redis = require('redis');
 
 function get_client() {
     if (process.env.VCAP_SERVICES) {
-        var redisconf = JSON.parse(process.env.VCAP_SERVICES)['redis'][0]['credentials'];
+        var redisconf = JSON.parse(process.env.VCAP_SERVICES).redis[0].credentials;
         var db = redis.createClient(redisconf.port,
                                 redisconf.host);
         db.auth(redisconf.password);
@@ -26,7 +26,7 @@ app.configure(function(){
 app.get('/api/', function(req, res) {
     db.smembers('triages', function(err, data) {
         data = data ? data : [];
-        res.json({'size': data.length, 'entries': data});
+        res.json({'size': data.length, 'entries': data.reverse()});
         res.status(200);
         res.end();
     });
@@ -42,10 +42,25 @@ app.post('/api/', function(req, res) {
 
 app.get('/api/:key/', function(req, res) {
     var key = 'triage:' + req.params.key;
+    var entries = [];
+    var count = 0;
+
     db.zrange(key, 0, -1, function(err, data) {
-        res.json({'size': data.length, 'entries': data});
-        res.status(200);
-        res.end();
+        count = data.length++;
+        for (var i = 0; i < data.length - 1; i++) {
+            function get(url) {
+                db.hget(url, 'title', function(err, title) {
+                    count--;
+                    entries.push({'url': url, 'title': title});
+                    if (!count) {
+                        res.json({'size': entries.length, 'entries': entries});
+                        res.status(200);
+                        res.end();
+                    }
+                });
+            };
+            get(data[i]);
+        }
     });
 });
 
@@ -55,6 +70,7 @@ app.post('/api/:key/', function(req, res) {
     if (!prefix.test(req.body.url)) {
         res.status(400);
     } else {
+        db.hset(escape(req.body.url), 'title', escape(req.body.title));
         db.zadd(key, 1, escape(req.body.url), function(err, data) {
             if (data) {
                 db.publish(key, escape(req.body.url));
@@ -81,9 +97,11 @@ app.get('/api-events/:key/', function(req, res) {
     req.socket.setTimeout(Infinity);
 
     subscriber.on('message', function(channel, message) {
-        messageCount++;
-        res.write('id: ' + messageCount + '\n');
-        res.write('data: ' + message + '\n\n');
+        db.hget(message, 'title', function(err, title) {
+            messageCount++;
+            res.write('id: ' + messageCount + '\n');
+            res.write('data: ' + JSON.stringify({'url': message, 'title': title}) + '\n\n');
+        });
     });
 
     res.writeHead(200, {
