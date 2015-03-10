@@ -66,7 +66,7 @@ app.get('/api/:key/', function(req, res) {
 
 app.post('/api/:key/', function(req, res) {
     var key = 'triage:' + req.params.key;
-    var prefix = new RegExp('^https://bugzilla.mozilla.org*');
+    var prefix = new RegExp('^(https://bugzilla.mozilla.org/|https://github.com/)');
     if (!prefix.test(req.body.url)) {
         res.status(400);
     } else {

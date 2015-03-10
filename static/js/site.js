@@ -21,8 +21,35 @@ var trim = (function() {
     };
 })();
 
+function notify(url) {
+  var _notify = function() {
+    var notification = new Notification(
+        'Triage with me',
+        {body: url.get('title')}
+    ).onclick(window.open(url.get('url')));
+  };
+
+  if (!("Notification" in window)) {
+    return;
+  }
+  else if (Notification.permission === "granted") {
+    _notify();
+  }
+  else if (Notification.permission !== 'denied') {
+    Notification.requestPermission(function (permission) {
+      if (permission === "granted") {
+        _notify();
+      }
+    });
+  }
+}
+
 (function($) {
-    var bug_re = /^.*\?id=(\d+)$/;
+    var res = [
+      /^https:\/\/(bug)zilla\.mozilla\.org.*\?id=(\d+)$/,
+      /^https:\/\/github\.com\/.*?\/(issue)s\/(\d+)$/,
+      /^https:\/\/github\.com\/.*?\/(pull)\/(\d+)$/
+    ];
     if ($('#triages').length > 0) {
         $.getJSON('/api/', function(data) {
             for (var record in data.entries) {
@@ -38,10 +65,15 @@ var trim = (function() {
         var key = window.location.hash.substr(1);
         var URL = Backbone.Model.extend({
             initialize: function() {
-                var bug_ = bug_re.exec(this.get('url'));
-                this.set({
-                    bug: bug_ ? bug_[1] : null
-                });
+              var bug_ = null;
+              for (var k = 0; k < res.length; k++) {
+                if (bug_ === null) {
+                  bug_ = res[k].exec(this.get('url'));
+                }
+              }
+              this.set({
+                bug: bug_ ? bug_[1] : null
+              });
             }
         });
         var URLs = Backbone.Collection.extend({
@@ -73,6 +105,7 @@ var trim = (function() {
                         title: json.title
                     });
                     self.collection.add(url);
+                    notify(url);
                 }, false);
 
                 this.render();
@@ -89,8 +122,10 @@ var trim = (function() {
                 var bug = item.get('bug');
                 $('span.label-warning').remove();
                 $(this.el).prepend(format(
-                    '<tr><td><span class="label label-warning">latest</span> &nbsp; <span class="label label-{0}">{1}</span></td><td><a target="_blank" href="{2}">{3}</td></tr>',
-                    bug ? 'success' : 'info', bug ? 'bug' : 'other', url, bug ? title : trim(url)
+                    '<tr><td><span class="label label-warning">latest</span> &nbsp; ' +
+                    '<span class="label label-{0}">{1}</span></td><td>' +
+                    '<a target="_blank" href="{2}">{3}</td></tr>',
+                    bug ? bug : 'other', bug ? bug : 'other', url, bug ? title : trim(url)
                 ));
             }
         });
