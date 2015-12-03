@@ -3,19 +3,7 @@ var escape = require('escape-html');
 var http = require('http');
 var redis = require('redis');
 
-function get_client() {
-    if (process.env.VCAP_SERVICES) {
-        var redisconf = JSON.parse(process.env.VCAP_SERVICES).redis[0].credentials;
-        var db = redis.createClient(redisconf.port,
-                                redisconf.host);
-        db.auth(redisconf.password);
-    } else {
-        var db = redis.createClient();
-    }
-    return db;
-}
-
-var db = get_client();
+var db = redis.createClient(process.env.REDIS_URL);
 var app = express();
 
 app.configure(function(){
@@ -118,4 +106,4 @@ app.get('/api-events/:key/', function(req, res) {
     });
 });
 
-app.listen(3000);
+app.listen(process.env.PORT || 3000);
