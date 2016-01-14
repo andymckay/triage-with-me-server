@@ -26,7 +26,8 @@ function notify(url) {
     var notification = new Notification(
         'Triage with me',
         {body: url.get('title')}
-    ).onclick(window.open(url.get('url')));
+    );
+    notification.onclick(window.open(url.get('url')));
   };
 
   if (!("Notification" in window)) {

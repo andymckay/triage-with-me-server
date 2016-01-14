@@ -1,0 +1,12 @@
+.label-issue {
+    background-color: firebrick;
+}
+.label-other {
+    background-color: lightgray;
+}
+.label-pull {
+    background-color: navy;
+}
+.label-bug {
+    background-color: darkgreen;
+}
