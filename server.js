@@ -72,7 +72,7 @@ app.post('/api/:key/', function(req, res) {
 
 app.get('/api-events/:key/', function(req, res) {
     var messageCount = 0;
-    var subscriber = get_client();
+    var subscriber = redis.createClient(process.env.REDIS_URL);
     var key = 'triage:' + req.params.key;
 
     function keep_alive() {
