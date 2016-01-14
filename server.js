@@ -82,7 +82,7 @@ app.get('/api-events/:key/', function(req, res) {
 
     subscriber.subscribe(key);
 
-    req.socket.setTimeout(Infinity);
+    req.socket.setTimeout(Number.MAX_VALUE);
 
     subscriber.on('message', function(channel, message) {
         db.hget(message, 'title', function(err, title) {
