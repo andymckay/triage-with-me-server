@@ -52,15 +52,19 @@ app.get('/api/:key/', function(req, res) {
                         res.end();
                     }
                 });
-            };
+            }
             get(data[i]);
         }
     });
 });
 
+app.options('/api/:key/', function(req, res) {
+  res.end();
+});
+
 app.post('/api/:key/', function(req, res) {
     var key = 'triage:' + req.params.key;
-    var prefix = new RegExp('^(https://bugzilla.mozilla.org/|https://github.com/)');
+    var prefix = new RegExp('^(https://bugzilla.mozilla.org/|https://github.com/|http://localhost/)');
     if (!prefix.test(req.body.url)) {
         res.status(400);
     } else {
